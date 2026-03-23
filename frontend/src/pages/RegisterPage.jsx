@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { configService } from '../services/apiService';
 import { Alert, Spinner } from '../components/common';
 import { isValidEmail, isValidPassword } from '../utils/helpers';
 
@@ -23,6 +24,23 @@ export default function RegisterPage() {
   const [alertMessage, setAlertMessage] = useState('');
   const { register, loading } = useAuth();
   const navigate = useNavigate();
+
+  const [config, setConfig] = useState({ departments: [], groups: [] });
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const res = await configService.getConfig();
+        setConfig(res.data.config);
+      } catch (err) {
+        console.error('Failed to load system config:', err);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+    loadConfig();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -184,11 +202,15 @@ export default function RegisterPage() {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
+                disabled={configLoading}
                 className={`w-full px-4 py-3 bg-white/5 border rounded-xl ${formData.department ? 'text-white' : 'text-gray-500'} appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer ${errors.department ? 'border-red-400' : 'border-white/10'}`}
               >
-                <option value="" disabled className="bg-slate-800 text-gray-400">Select Department</option>
-                <option value="Software Engineering" className="bg-slate-800 text-white">Software Engineering</option>
-                <option value="Computer Science" className="bg-slate-800 text-white">Computer Science</option>
+                <option value="" disabled className="bg-slate-800 text-gray-400">
+                  {configLoading ? 'Loading departments...' : 'Select Department'}
+                </option>
+                {config.departments.map(dep => (
+                  <option key={dep} value={dep} className="bg-slate-800 text-white">{dep}</option>
+                ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
@@ -204,14 +226,15 @@ export default function RegisterPage() {
                 name="group"
                 value={formData.group}
                 onChange={handleChange}
+                disabled={configLoading}
                 className={`w-full px-4 py-3 bg-white/5 border rounded-xl ${formData.group ? 'text-white' : 'text-gray-500'} appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer ${errors.group ? 'border-red-400' : 'border-white/10'}`}
               >
-                <option value="" disabled className="bg-slate-800 text-gray-400">Select Group</option>
-                <option value="Group A" className="bg-slate-800 text-white">Group A</option>
-                <option value="Group B" className="bg-slate-800 text-white">Group B</option>
-                <option value="Group C" className="bg-slate-800 text-white">Group C</option>
-                <option value="Group D" className="bg-slate-800 text-white">Group D</option>
-                <option value="Group E" className="bg-slate-800 text-white">Group E</option>
+                <option value="" disabled className="bg-slate-800 text-gray-400">
+                  {configLoading ? 'Loading groups...' : 'Select Group'}
+                </option>
+                {config.groups.map(grp => (
+                  <option key={grp} value={grp} className="bg-slate-800 text-white">{grp}</option>
+                ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>

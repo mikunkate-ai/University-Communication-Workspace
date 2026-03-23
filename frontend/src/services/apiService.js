@@ -105,4 +105,11 @@ export const notificationService = {
   clearRead: () => apiClient.delete('/notifications/clear/read'),
 };
 
+// System Config Services
+export const configService = {
+  getConfig: () => apiClient.get('/config'),
+  addItem: (type, item) => apiClient.post(`/config/${type}`, { item }),
+  removeItem: (type, item) => apiClient.delete(`/config/${type}/${encodeURIComponent(item)}`),
+};
+
 export default apiClient;

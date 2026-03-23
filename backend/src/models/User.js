@@ -42,8 +42,8 @@ const userSchema = new mongoose.Schema(
     },
     group: {
       type: String,
+      trim: true,
       required: [true, 'Group is required'],
-      enum: ['Group A', 'Group B', 'Group C', 'Group D', 'Group E'],
     },
     matricNumber: {
       type: String,

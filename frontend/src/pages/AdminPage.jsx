@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { userService, announcementService } from '../services/apiService';
+import { userService, announcementService, configService } from '../services/apiService';
 
 const TABS = [
   { id: 'announcements', label: 'Announcements', icon: '📢' },
   { id: 'users', label: 'User Management', icon: '👥' },
+  { id: 'domains', label: 'Domains', icon: '🏢' },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -35,6 +36,12 @@ export default function AdminPage() {
   const [announcementMsg, setAnnouncementMsg] = useState('');
   const [announcementError, setAnnouncementError] = useState('');
 
+  // Config state
+  const [config, setConfig] = useState({ departments: [], groups: [] });
+  const [newDepartment, setNewDepartment] = useState('');
+  const [newGroup, setNewGroup] = useState('');
+  const [configLoading, setConfigLoading] = useState(false);
+
   // Users state
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -56,6 +63,13 @@ export default function AdminPage() {
     } catch { /* silent */ }
   }, []);
 
+  const loadConfig = useCallback(async () => {
+    try {
+      const res = await configService.getConfig();
+      setConfig(res.data.config);
+    } catch { /* silent */ }
+  }, []);
+
   const loadUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
@@ -65,7 +79,7 @@ export default function AdminPage() {
     setUsersLoading(false);
   }, [userSearch]);
 
-  useEffect(() => { loadAnnouncements(); }, [loadAnnouncements]);
+  useEffect(() => { loadAnnouncements(); loadConfig(); }, [loadAnnouncements, loadConfig]);
   useEffect(() => {
     if (activeTab === 'users') loadUsers();
   }, [activeTab, loadUsers]);
@@ -95,6 +109,27 @@ export default function AdminPage() {
       await announcementService.delete(id);
       setAnnouncements(prev => prev.filter(a => a._id !== id));
     } catch { /* silent */ }
+  };
+
+  const handleAddConfig = async (type, item, setter) => {
+    if (!item.trim()) return;
+    setConfigLoading(true);
+    try {
+      await configService.addItem(type, item.trim());
+      await loadConfig();
+      setter('');
+    } catch { /* silent */ }
+    setConfigLoading(false);
+  };
+
+  const handleRemoveConfig = async (type, item) => {
+    if (!window.confirm(`Delete ${item}?`)) return;
+    setConfigLoading(true);
+    try {
+      await configService.removeItem(type, item);
+      await loadConfig();
+    } catch { /* silent */ }
+    setConfigLoading(false);
   };
 
   const execUserAction = async (userId, action) => {
@@ -257,6 +292,83 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── DOMAINS TAB ─── */}
+        {activeTab === 'domains' && (
+          <div className="p-6 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Departments */}
+              <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
+                <h3 className="text-lg font-bold text-white mb-4">Manage Departments</h3>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    placeholder="New Department…"
+                    value={newDepartment}
+                    onChange={e => setNewDepartment(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-800/80 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    disabled={configLoading}
+                    onClick={() => handleAddConfig('departments', newDepartment, setNewDepartment)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {config.departments.map(dep => (
+                    <div key={dep} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                      <span className="text-gray-200 font-medium">{dep}</span>
+                      <button
+                        disabled={configLoading}
+                        onClick={() => handleRemoveConfig('departments', dep)}
+                        className="text-gray-400 hover:text-red-400 disabled:opacity-50"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {config.departments.length === 0 && <p className="text-gray-500 text-sm text-center py-4">No departments configured.</p>}
+                </div>
+              </div>
+
+              {/* Groups */}
+              <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
+                <h3 className="text-lg font-bold text-white mb-4">Manage Groups</h3>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    placeholder="New Group…"
+                    value={newGroup}
+                    onChange={e => setNewGroup(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-800/80 border border-slate-600 rounded-lg text-white font-medium focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    disabled={configLoading}
+                    onClick={() => handleAddConfig('groups', newGroup, setNewGroup)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {config.groups.map(grp => (
+                    <div key={grp} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                      <span className="text-gray-200 font-medium">{grp}</span>
+                      <button
+                        disabled={configLoading}
+                        onClick={() => handleRemoveConfig('groups', grp)}
+                        className="text-gray-400 hover:text-red-400 disabled:opacity-50"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {config.groups.length === 0 && <p className="text-gray-500 text-sm text-center py-4">No groups configured.</p>}
+                </div>
+              </div>
             </div>
           </div>
         )}
