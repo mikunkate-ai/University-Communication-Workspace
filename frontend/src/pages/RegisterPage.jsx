@@ -13,6 +13,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     role: 'student',
     department: '',
+    group: '',
     matricNumber: '',
     lecturerId: '',
   });
@@ -28,6 +29,8 @@ export default function RegisterPage() {
 
     if (!formData.firstName) newErrors.firstName = 'First name is required';
     if (!formData.lastName) newErrors.lastName = 'Last name is required';
+    if (!formData.department) newErrors.department = 'Department is required';
+    if (!formData.group) newErrors.group = 'Group is required';
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -77,6 +80,7 @@ export default function RegisterPage() {
       password: formData.password,
       role: formData.role,
       department: formData.department,
+      group: formData.group,
       matricNumber: formData.matricNumber,
       lecturerId: formData.lecturerId,
     });
@@ -190,6 +194,30 @@ export default function RegisterPage() {
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
               </div>
             </div>
+            {errors.department && <p className="text-red-400 text-xs mt-1">{errors.department}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Group</label>
+            <div className="relative">
+              <select
+                name="group"
+                value={formData.group}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 bg-white/5 border rounded-xl ${formData.group ? 'text-white' : 'text-gray-500'} appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer ${errors.group ? 'border-red-400' : 'border-white/10'}`}
+              >
+                <option value="" disabled className="bg-slate-800 text-gray-400">Select Group</option>
+                <option value="Group A" className="bg-slate-800 text-white">Group A</option>
+                <option value="Group B" className="bg-slate-800 text-white">Group B</option>
+                <option value="Group C" className="bg-slate-800 text-white">Group C</option>
+                <option value="Group D" className="bg-slate-800 text-white">Group D</option>
+                <option value="Group E" className="bg-slate-800 text-white">Group E</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+              </div>
+            </div>
+            {errors.group && <p className="text-red-400 text-xs mt-1">{errors.group}</p>}
           </div>
 
           {/* Role-specific ID field */}

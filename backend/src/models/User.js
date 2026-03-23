@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
       trim: true,
+      required: [true, 'Department is required'],
+    },
+    group: {
+      type: String,
+      required: [true, 'Group is required'],
+      enum: ['Group A', 'Group B', 'Group C', 'Group D', 'Group E'],
     },
     matricNumber: {
       type: String,

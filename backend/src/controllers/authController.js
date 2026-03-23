@@ -21,10 +21,10 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const register = asyncHandler(async (req, res, next) => {
-  const { email, password, role, firstName, lastName, department, matricNumber, lecturerId } = req.body;
+  const { email, password, role, firstName, lastName, department, group, matricNumber, lecturerId } = req.body;
 
   // Validation
-  if (!email || !password || !firstName || !lastName) {
+  if (!email || !password || !firstName || !lastName || !department || !group) {
     throw new AppError('Please provide all required fields', 400);
   }
 
@@ -41,7 +41,8 @@ export const register = asyncHandler(async (req, res, next) => {
     role: role || 'student',
     firstName,
     lastName,
-    department: department || '',
+    department,
+    group,
     matricNumber: role === 'student' ? (matricNumber || null) : null,
     lecturerId: role === 'lecturer' ? (lecturerId || null) : null,
   });
