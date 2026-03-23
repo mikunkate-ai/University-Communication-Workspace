@@ -21,6 +21,14 @@ const projectGroupSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Supervisor ID is required'],
     },
+    department: {
+      type: String,
+      required: true,
+    },
+    group: {
+      type: String,
+      required: true,
+    },
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,

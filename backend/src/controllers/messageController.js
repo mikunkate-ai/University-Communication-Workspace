@@ -25,6 +25,16 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Enforce domain isolation for non-admins
+  if (req.user.role !== 'administrator') {
+    if (recipient.department !== req.user.department || recipient.group !== req.user.group) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only message users in your own department and group',
+      });
+    }
+  }
+
   const message = await Message.create({
     senderId: req.user._id,
     recipientId,

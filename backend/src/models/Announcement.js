@@ -32,6 +32,14 @@ const announcementSchema = new mongoose.Schema(
       ref: 'ProjectGroup',
       default: null,
     },
+    department: {
+      type: String,
+      required: true,
+    },
+    group: {
+      type: String,
+      required: true,
+    },
     relatedCourse: {
       type: String,
       trim: true,

@@ -8,7 +8,11 @@ export const getAllUsers = asyncHandler(async (req, res, next) => {
   const { role, search } = req.query;
 
   // Admins can see all users (including inactive); others only see active
-  let query = req.user.role === 'administrator' ? {} : { isActive: true };
+  let query = req.user.role === 'administrator' ? {} : { 
+    isActive: true,
+    department: req.user.department,
+    group: req.user.group
+  };
 
   if (role) {
     query.role = role;
@@ -151,10 +155,17 @@ export const reactivateUser = asyncHandler(async (req, res, next) => {
 // @route   GET /api/users/lecturers
 // @access  Private
 export const getLecturers = asyncHandler(async (req, res, next) => {
-  const lecturers = await User.find({
+  let query = {
     role: 'lecturer',
     isActive: true,
-  }).select('-password');
+  };
+
+  if (req.user.role !== 'administrator') {
+    query.department = req.user.department;
+    query.group = req.user.group;
+  }
+
+  const lecturers = await User.find(query).select('-password');
 
   res.status(200).json({
     success: true,

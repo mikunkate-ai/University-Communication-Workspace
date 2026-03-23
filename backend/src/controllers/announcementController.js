@@ -41,6 +41,8 @@ export const createAnnouncement = asyncHandler(async (req, res, next) => {
     category: category || 'general',
     targetAudience: finalTargetAudience,
     targetGroupId: targetGroupId || null,
+    department: req.user.department,
+    group: req.user.group,
     relatedCourse: relatedCourse || '',
     attachments: attachments || [],
     expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -89,6 +91,12 @@ export const createAnnouncement = asyncHandler(async (req, res, next) => {
 export const getAnnouncements = asyncHandler(async (req, res, next) => {
   const { category, search } = req.query;
   let query = { isActive: true };
+
+  // Enforce domain isolation for non-admins
+  if (req.user.role !== 'administrator') {
+    query.department = req.user.department;
+    query.group = req.user.group;
+  }
 
   // Build audience filter based on user role
   const audienceFilters = [

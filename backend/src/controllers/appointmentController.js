@@ -36,6 +36,9 @@ export const createAppointment = asyncHandler(async (req, res, next) => {
     if (!lecturer || lecturer.role !== 'lecturer') {
       return res.status(404).json({ success: false, message: 'Lecturer not found' });
     }
+    if (req.user.role !== 'administrator' && (lecturer.department !== req.user.department || lecturer.group !== req.user.group)) {
+      return res.status(403).json({ success: false, message: 'You can only book appointments with lecturers in your department and group' });
+    }
     appointmentData.studentId = req.user._id;
     appointmentData.lecturerId = lecturerId;
     appointmentData.status = 'pending';
@@ -47,6 +50,9 @@ export const createAppointment = asyncHandler(async (req, res, next) => {
     const student = await User.findById(studentId);
     if (!student || student.role !== 'student') {
       return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+    if (req.user.role !== 'administrator' && (student.department !== req.user.department || student.group !== req.user.group)) {
+      return res.status(403).json({ success: false, message: 'You can only book appointments with students in your department and group' });
     }
     appointmentData.lecturerId = req.user._id;
     appointmentData.studentId = studentId;
@@ -291,6 +297,17 @@ export const deleteAppointment = asyncHandler(async (req, res, next) => {
 // @access  Private
 export const getLecturerAvailability = asyncHandler(async (req, res, next) => {
   const { date } = req.query;
+
+  // Enforce domain isolation: student must be in same domain
+  if (req.user.role !== 'administrator') {
+    const lecturer = await User.findById(req.params.lecturerId);
+    if (!lecturer || lecturer.department !== req.user.department || lecturer.group !== req.user.group) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only view availability for lecturers in your department and group',
+      });
+    }
+  }
 
   if (!date) {
     return res.status(400).json({

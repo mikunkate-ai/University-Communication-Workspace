@@ -30,8 +30,25 @@ export const createTask = asyncHandler(async (req, res, next) => {
     ? assignedTo
     : assignedTo ? [assignedTo] : [];
 
+  // Verify all assigned users are in the same domain
+  if (assignedToArr.length > 0 && req.user.role !== 'administrator') {
+    const validAssignees = await User.countDocuments({
+      _id: { $in: assignedToArr },
+      department: req.user.department,
+      group: req.user.group
+    });
+    if (validAssignees !== assignedToArr.length) {
+      return res.status(403).json({
+        success: false,
+        message: 'All assigned users must be in your department and group',
+      });
+    }
+  }
+
   const task = await Task.create({
     createdBy: req.user._id,
+    department: req.user.department,
+    group: req.user.group,
     title,
     description: description || '',
     deadline: new Date(deadline),
@@ -74,6 +91,11 @@ export const createTask = asyncHandler(async (req, res, next) => {
 export const getTasks = asyncHandler(async (req, res, next) => {
   const { status, priority } = req.query;
   let query = {};
+
+  if (req.user.role !== 'administrator') {
+    query.department = req.user.department;
+    query.group = req.user.group;
+  }
 
   if (req.user.role === 'lecturer') {
     query.createdBy = req.user._id;

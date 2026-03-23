@@ -25,11 +25,29 @@ export const createProject = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Verify all members are in the same domain
+  if (members && members.length > 0) {
+    const validMembers = await User.countDocuments({
+      _id: { $in: members },
+      department: req.user.department,
+      group: req.user.group,
+      role: 'student'
+    });
+    if (validMembers !== members.length) {
+      return res.status(403).json({
+        success: false,
+        message: 'All members must be students in your department and group',
+      });
+    }
+  }
+
   const project = await ProjectGroup.create({
     groupName,
     projectTitle,
     description: description || '',
     supervisorId: req.user._id,
+    department: req.user.department,
+    group: req.user.group,
     members: members || [],
     deadline: deadline || null,
   });
@@ -49,6 +67,11 @@ export const createProject = asyncHandler(async (req, res, next) => {
 // @access  Private
 export const getProjects = asyncHandler(async (req, res, next) => {
   let query = { status: 'active' };
+
+  if (req.user.role !== 'administrator') {
+    query.department = req.user.department;
+    query.group = req.user.group;
+  }
 
   if (req.user.role === 'lecturer') {
     query.supervisorId = req.user._id;
@@ -200,6 +223,16 @@ export const addProjectMember = asyncHandler(async (req, res, next) => {
       success: false,
       message: 'Student not found',
     });
+  }
+
+  // Enforce domain isolation
+  if (req.user.role !== 'administrator') {
+    if (user.department !== req.user.department || user.group !== req.user.group) {
+      return res.status(403).json({
+        success: false,
+        message: 'Student must be in your department and group',
+      });
+    }
   }
 
   // Check if already a member

@@ -13,6 +13,14 @@ const taskSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    department: {
+      type: String,
+      required: true,
+    },
+    group: {
+      type: String,
+      required: true,
+    },
     title: {
       type: String,
       required: [true, 'Task title is required'],
