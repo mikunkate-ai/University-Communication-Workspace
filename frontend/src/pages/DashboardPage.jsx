@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppointment, useTask, useAnnouncement } from '../hooks';
 import { Card, Spinner, Button, StatusBadge } from '../components/common';
+import { userService } from '../services/apiService';
 import { formatDate, getInitials, getRelativeTime, getPriorityColor, isPast } from '../utils/helpers';
 import { FiCalendar, FiClock, FiMapPin, FiUser, FiAlertCircle, FiBookOpen } from 'react-icons/fi';
 
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const { announcements, fetchAnnouncements } = useAnnouncement();
   const [loading, setLoading] = useState(true);
   const [annCountCleared, setAnnCountCleared] = useState(false);
+  const [students, setStudents] = useState([]);
   const annTimerRef = useRef(null);
 
   const isLecturer = user?.role === 'lecturer';
@@ -23,11 +25,19 @@ export default function DashboardPage() {
       setLoading(true);
       setAnnCountCleared(false);
       clearTimeout(annTimerRef.current);
-      await Promise.all([
+      const promises = [
         fetchAppointments(),
         fetchTasks(),
         fetchAnnouncements(),
-      ]);
+      ];
+      if (user?.role === 'lecturer') {
+        promises.push(
+          userService.getAll({ role: 'student' }).then(res => {
+            setStudents(res.data.users || []);
+          }).catch(() => {})
+        );
+      }
+      await Promise.all(promises);
       setLoading(false);
       annTimerRef.current = setTimeout(() => setAnnCountCleared(true), 10 * 60 * 1000);
     };
@@ -228,9 +238,10 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Latest Announcements */}
-      <Card>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Latest Announcements</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Latest Announcements */}
+        <Card className="flex flex-col h-full">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Latest Announcements</h2>
         {announcements.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {announcements.slice(0, 3).map(ann => {
@@ -269,12 +280,55 @@ export default function DashboardPage() {
         ) : (
           <p className="text-gray-400 text-sm">No announcements</p>
         )}
-        <Link to="/announcements">
-          <Button variant="outline" size="sm" className="w-full mt-4">
+        <Link to="/announcements" className="mt-auto pt-4">
+          <Button variant="outline" size="sm" className="w-full">
             View All Announcements
           </Button>
         </Link>
-      </Card>
+        </Card>
+
+        {/* My Students (Lecturer Only) */}
+        {isLecturer && (
+          <Card className="flex flex-col h-full">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">My Students</h2>
+              <span className="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full shadow-sm">
+                {students.length} Total
+              </span>
+            </div>
+            
+            {students.length > 0 ? (
+              <div className="space-y-3 overflow-y-auto pr-2 max-h-[320px] custom-scrollbar flex-1 mb-4">
+                {students.map(student => (
+                  <div key={student._id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-[#f8fafc] hover:border-indigo-100 transition-all shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 font-bold flex items-center justify-center text-sm flex-shrink-0 shadow-sm border border-indigo-200/50">
+                        {getInitials(student.firstName, student.lastName)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 tracking-tight">{student.firstName} {student.lastName}</p>
+                        <p className="text-xs text-gray-500 font-medium">{student.email}</p>
+                      </div>
+                    </div>
+                    <Link to={`/messages?user=${student._id}`}>
+                      <button className="p-2 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Message Student">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[150px]">
+                <p className="text-gray-400 text-sm">No students registered yet.</p>
+              </div>
+            )}
+            <div className="mt-auto pt-4 border-t border-gray-100 text-xs font-medium text-gray-400 text-center">
+              Filtered by: {user.department} — {user.group}
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
