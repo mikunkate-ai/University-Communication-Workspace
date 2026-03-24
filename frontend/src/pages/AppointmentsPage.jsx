@@ -22,6 +22,8 @@ export default function AppointmentsPage() {
   const [selectedContact, setSelectedContact] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
+  const [location, setLocation] = useState('Online');
+  const [duration, setDuration] = useState(30);
   const [title, setTitle] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -78,7 +80,7 @@ export default function AppointmentsPage() {
       return;
     }
 
-    const data = { title: title.trim(), scheduledDate: appointmentDate, scheduledTime: appointmentTime };
+    const data = { title: title.trim(), scheduledDate: appointmentDate, scheduledTime: appointmentTime, location, duration };
     if (isLecturer) {
       data.studentId = selectedContact;
     } else {
@@ -93,6 +95,8 @@ export default function AppointmentsPage() {
       setSelectedContact('');
       setAppointmentDate('');
       setAppointmentTime('');
+      setLocation('Online');
+      setDuration(30);
       setFormError('');
       showSuccess('Appointment booked successfully!');
     } catch (err) {
@@ -415,6 +419,31 @@ export default function AppointmentsPage() {
                 value={appointmentTime}
                 onChange={(e) => setAppointmentTime(e.target.value)}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Location</label>
+                <select
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-sm appearance-none"
+                >
+                  <option value="Online">🌐 Online</option>
+                  <option value="Lecturer's Office">🏢 Lecturer's Office</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Duration (mins)</label>
+                <input
+                  type="number"
+                  min="10"
+                  max="60"
+                  step="5"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-sm"
+                />
+              </div>
             </div>
             {formError && (
               <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">
